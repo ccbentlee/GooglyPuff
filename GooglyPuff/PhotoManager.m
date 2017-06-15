@@ -23,6 +23,8 @@
     dispatch_once(&onceToken, ^{
         sharedPhotoManager = [[PhotoManager alloc] init];
         sharedPhotoManager->_photosArray = [NSMutableArray array];
+        
+        sharedPhotoManager->_concurrentPhotoQueue = dispatch_queue_create("com.selander.GooglyPuff.photoQueue", DISPATCH_QUEUE_CONCURRENT);
     });
 
     return sharedPhotoManager;
@@ -34,7 +36,11 @@
 
 - (NSArray *)photos
 {
-    return _photosArray;
+    __block NSArray *array;
+    dispatch_sync(self.concurrentPhotoQueue, ^{
+        array = [NSArray arrayWithArray:_photosArray];
+    });
+    return array;
 }
 
 - (void)addPhoto:(Photo *)photo
